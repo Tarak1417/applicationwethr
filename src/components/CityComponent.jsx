@@ -6,6 +6,7 @@ function CityComponent(props) {
     <div className="container">
       <span className="title">React Weather App</span>
       <img
+      
         className="image"
         src="https://cdn-icons-png.flaticon.com/512/869/869869.png"
         alt="Error"
