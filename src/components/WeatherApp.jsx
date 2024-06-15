@@ -57,7 +57,7 @@ function WeatherApp() {
    
     <Container>
       
-      <AppTitle>Weather App</AppTitle>
+      <AppTitle className="hedinf">Weather App</AppTitle>
       {weatherDetails ? (
         <WeatherComponent weatherDetails={weatherDetails} />
       ) : (
