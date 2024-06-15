@@ -11,6 +11,23 @@ export const WeatherInfoIcons = {
   pressure: "https://cdn-icons-png.flaticon.com/512/4115/4115904.png",
 };
 
+
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+  background: #f0f0f0;
+  border-radius: 12px;
+  background: linear-gradient(to bottom, #36d1dc, #5b86e5);
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+`;
+
 const Location = styled.span`
   margin: 15px auto;
   text-transform: capitalize;
@@ -35,6 +52,7 @@ const WeatherInfoLabel = styled.span`
   font-weight: bold;
   font-size: 14px;
 `;
+
 
 const WeatherIcon = styled.img`
   width: 100px;
@@ -62,14 +80,11 @@ const WeatherInfoContainer = styled.div`
 
 const InfoContainer = styled.div`
   display: flex;
-  
   margin: 5px 10px;
   flex-direction: row;
   justify-content: space-evenly;
   align-items: center;
-`
-
-;
+`;
 
 const InfoIcon = styled.img`
   width: 36px;
@@ -89,6 +104,65 @@ const InfoLabel = styled.span`
 
 const ForecastContainer = styled.div`
   margin-top: 30px;
+  width: 100%;
+`;
+const BackButton = styled.button`
+  padding: 12px 24px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+   transition: background-color 0.3s ease;
+  margin-top: 20px;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+
+  @media (max-width: 600px) {
+    font-size: 0.9rem;
+    padding: 10px 20px;
+`;
+
+const FavoriteButton = styled.button`
+  padding: 12px 24px;
+  font-size: 1rem;
+  background-color: ${props => (props.isFavorite ? "#dc3545" : "#28a745")};
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${props => (props.isFavorite ? "#c82333" : "#218838")};
+  }
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+
+
+
+
+const ForecastGrid = styled.div`
+  display: grid;
+  
+  
+
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    
+  }
 `;
 
 const ForecastItem = styled.div`
@@ -96,11 +170,13 @@ const ForecastItem = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 10px;
+  
   padding: 10px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  width: 120px;
+  border-width:1px;
+  border-style:solid;
+  border-color:rgb(53, 52, 52);
 `;
 
 const DateLabel = styled.span`
@@ -111,7 +187,16 @@ const DateLabel = styled.span`
 
 const TemperatureLabel = styled.span`
   font-size: 16px;
+  margin-bottom: 5px;
 `;
+
+const Description = styled.span`
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 5px;
+  text-transform: capitalize;
+`;
+
 const WeatherComponent = (props) => {
   const { weatherDetails } = props;
   const [isFavorite, setIsFavorite] = useState(false);
@@ -167,43 +252,91 @@ const WeatherComponent = (props) => {
     localStorage.setItem("favoriteLocations", JSON.stringify(favoriteLocations));
   };
 
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+    return `${date.getHours()}:${date.getMinutes()}`;
+  };
+
   return (
-    <>
-      <div className="container">
-        <WeatherContainer>
-          <Condition>
-            <span>{`${Math.floor(weatherDetails?.main?.temp)}°C`}</span>
-            {`  |  ${weatherDetails?.weather[0].description}`}
-          </Condition>
-          <WeatherIcon src={WeatherIcons[weatherDetails?.weather[0].icon]} />
-        </WeatherContainer>
-        <Location>{`${weatherDetails?.name}, ${weatherDetails?.sys?.country}`}</Location>
+    <Container>
+      <WeatherContainer>
+        <Condition>
+          <span>{`${Math.floor(weatherDetails?.main?.temp)}°C`}</span>
+          {`  |  ${weatherDetails?.weather[0].description}`}
+        </Condition>
+        <WeatherIcon src={WeatherIcons[weatherDetails?.weather[0].icon]} />
+      </WeatherContainer>
+      <Location>{`${weatherDetails?.name}, ${weatherDetails?.sys?.country}`}</Location>
 
-        <WeatherInfoLabel>Weather Info</WeatherInfoLabel>
-        <WeatherInfoContainer>
-          {/* Weather info components here */}
-        </WeatherInfoContainer>
+      <WeatherInfoLabel>Weather Info</WeatherInfoLabel>
+      <WeatherInfoContainer>
+        <InfoContainer>
+          <InfoIcon src={WeatherInfoIcons["sunrise"]} />
+          <InfoLabel>
+            {formatTime(weatherDetails?.sys?.sunrise)}
+            <span>Sunrise</span>
+          </InfoLabel>
+        </InfoContainer>
+        <InfoContainer>
+          <InfoIcon src={WeatherInfoIcons["sunset"]} />
+          <InfoLabel>
+            {formatTime(weatherDetails?.sys?.sunset)}
+            <span>Sunset</span>
+          </InfoLabel>
+        </InfoContainer>
+        <InfoContainer>
+          <InfoIcon src={WeatherInfoIcons["humidity"]} />
+          <InfoLabel>
+            {weatherDetails?.main?.humidity}%
+            <span>Humidity</span>
+          </InfoLabel>
+        </InfoContainer>
+        <InfoContainer>
+          <InfoIcon src={WeatherInfoIcons["wind"]} />
+          <InfoLabel>
+            {weatherDetails?.wind?.speed} m/s
+            <span>Wind</span>
+          </InfoLabel>
+        </InfoContainer>
+        <InfoContainer>
+          <InfoIcon src={WeatherInfoIcons["pressure"]} />
+          <InfoLabel>
+            {weatherDetails?.main?.pressure} hPa
+            <span>Pressure</span>
+          </InfoLabel>
+        </InfoContainer>
+      </WeatherInfoContainer>
 
-        <ForecastContainer>
-          <WeatherInfoLabel>5-Day Forecast</WeatherInfoLabel>
-          <div style={{ display: "flex", flexWrap: "wrap" }}>
-            {forecastData.slice(0, 5).map((forecast) => (
+      <ForecastContainer>
+        <WeatherInfoLabel>5-Day Forecast</WeatherInfoLabel>
+        <ForecastGrid>
+          {forecastData
+            .filter((_, index) => index % 8 === 0) // Filter to get data for every 24 hours
+            .map((forecast) => (
               <ForecastItem key={forecast.dt}>
-                {/* Forecast item details here */}
+                <DateLabel>{formatDate(forecast.dt)}</DateLabel>
+                <WeatherIcon src={WeatherIcons[forecast.weather[0].icon]} />
+                <TemperatureLabel>{`${Math.floor(forecast.main.temp)}°C`}</TemperatureLabel>
+                <Description>{forecast.weather[0].description}</Description>
               </ForecastItem>
             ))}
-          </div>
-        </ForecastContainer>
+        </ForecastGrid>
+      </ForecastContainer>
 
-        <button className="back-button" onClick={() => window.history.go()}>
-          Go back
-        </button>
+      <button className="back-button" onClick={() => window.history.go()}>
+        Go back
+      </button>
+      
 
-        <button className="back-button" onClick={toggleFavorite}>
-          {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-        </button>
-      </div>
-    </>
+      <button className="back-button" onClick={toggleFavorite}>
+        {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+      </button>
+    </Container>
   );
 };
 
