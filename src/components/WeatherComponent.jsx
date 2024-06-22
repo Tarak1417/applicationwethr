@@ -2,6 +2,29 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import { WeatherIcons } from "./weatherIcons";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+
+ChartJS.register(
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 export const WeatherInfoIcons = {
   sunset: "https://cdn-icons-png.flaticon.com/512/2924/2924900.png",
@@ -10,8 +33,6 @@ export const WeatherInfoIcons = {
   wind: "https://cdn-icons-png.flaticon.com/512/1506/1506761.png",
   pressure: "https://cdn-icons-png.flaticon.com/512/4115/4115904.png",
 };
-
-
 
 const Container = styled.div`
   display: flex;
@@ -52,7 +73,6 @@ const WeatherInfoLabel = styled.span`
   font-weight: bold;
   font-size: 14px;
 `;
-
 
 const WeatherIcon = styled.img`
   width: 100px;
@@ -106,6 +126,7 @@ const ForecastContainer = styled.div`
   margin-top: 30px;
   width: 100%;
 `;
+
 const BackButton = styled.button`
   padding: 12px 24px;
   font-size: 1rem;
@@ -114,7 +135,7 @@ const BackButton = styled.button`
   border: none;
   border-radius: 4px;
   cursor: pointer;
-   transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease;
   margin-top: 20px;
 
   &:hover {
@@ -124,12 +145,13 @@ const BackButton = styled.button`
   @media (max-width: 600px) {
     font-size: 0.9rem;
     padding: 10px 20px;
+  }
 `;
 
 const FavoriteButton = styled.button`
   padding: 12px 24px;
   font-size: 1rem;
-  background-color: ${props => (props.isFavorite ? "#dc3545" : "#28a745")};
+  background-color: ${(props) => (props.isFavorite ? "#dc3545" : "#28a745")};
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -137,7 +159,7 @@ const FavoriteButton = styled.button`
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: ${props => (props.isFavorite ? "#c82333" : "#218838")};
+    background-color: ${(props) => (props.isFavorite ? "#c82333" : "#218838")};
   }
 `;
 
@@ -148,20 +170,12 @@ const ButtonContainer = styled.div`
   margin-top: 20px;
 `;
 
-
-
-
-
 const ForecastGrid = styled.div`
   display: grid;
-  
-  
-
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 10px;
   @media (max-width: 600px) {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    
   }
 `;
 
@@ -170,13 +184,12 @@ const ForecastItem = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  
   padding: 10px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-width:1px;
-  border-style:solid;
-  border-color:rgb(53, 52, 52);
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(53, 52, 52);
 `;
 
 const DateLabel = styled.span`
@@ -201,13 +214,26 @@ const WeatherComponent = (props) => {
   const { weatherDetails } = props;
   const [isFavorite, setIsFavorite] = useState(false);
   const [forecastData, setForecastData] = useState([]);
+  const [graphData, setGraphData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: "Temperature (°C)",
+        data: [],
+        borderColor: "rgba(75,192,192,1)",
+        backgroundColor: "rgba(75,192,192,0.2)",
+        fill: true,
+      },
+    ],
+  });
 
   useEffect(() => {
     const favoriteLocations =
       JSON.parse(localStorage.getItem("favoriteLocations")) || [];
     const isLocationFavorite = favoriteLocations.some(
       (loc) =>
-        loc.name === weatherDetails?.name && loc.country === weatherDetails?.sys?.country
+        loc.name === weatherDetails?.name &&
+        loc.country === weatherDetails?.sys?.country
     );
     setIsFavorite(isLocationFavorite);
 
@@ -219,6 +245,33 @@ const WeatherComponent = (props) => {
         );
         console.log("Forecast Response:", forecastResponse.data);
         setForecastData(forecastResponse.data.list);
+
+        const filteredData = forecastResponse.data.list.filter(
+          (_, index) => index % 8 === 0
+        );
+        setGraphData({
+          labels: filteredData.map((forecast) => formatDate(forecast.dt)),
+          datasets: [
+            {
+              label: "Temperature (°C)",
+              data: filteredData.map((forecast) => forecast.main.temp),
+              borderColor: "rgba(75,192,192,1)",
+              backgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(75,192,192,0.4)');
+                gradient.addColorStop(1, 'rgba(75,192,192,0.1)');
+                return gradient;
+              },
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: 'rgba(75,192,192,1)',
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: 'rgba(75,192,192,1)',
+            },
+          ],
+        });
       } catch (error) {
         console.error("Error fetching forecast:", error);
       }
@@ -328,14 +381,50 @@ const WeatherComponent = (props) => {
         </ForecastGrid>
       </ForecastContainer>
 
-      <button className="back-button" onClick={() => window.history.go()}>
-        Go back
-      </button>
-      
+      <ForecastContainer>
+        <WeatherInfoLabel>Temperature Trend</WeatherInfoLabel>
+        <div style={{ width: '100%', height: '400px' }}>
+          <Line data={graphData} options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+              },
+              tooltip: {
+                callbacks: {
+                  label: (tooltipItem) => `${tooltipItem.raw}°C`
+                }
+              }
+            },
+            scales: {
+              x: {
+                display: true,
+                title: {
+                  display: true,
+                  text: 'Date'
+                }
+              },
+              y: {
+                display: true,
+                title: {
+                  display: true,
+                  text: 'Temperature (°C)'
+                },
+                beginAtZero: false
+              }
+            }
+          }} />
+        </div>
+      </ForecastContainer>
 
-      <button className="back-button" onClick={toggleFavorite}>
-        {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-      </button>
+      <ButtonContainer>
+        <BackButton onClick={() => window.history.back()}>Go back</BackButton>
+        <FavoriteButton isFavorite={isFavorite} onClick={toggleFavorite}>
+          {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+        </FavoriteButton>
+      </ButtonContainer>
     </Container>
   );
 };
